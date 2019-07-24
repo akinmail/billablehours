@@ -44,7 +44,6 @@ public class CsvService {
                             employeeBillDto1.setNoOfHours(employeeBillDto1.getNoOfHours() + employeeBillDto2.getNoOfHours());
                             employeeBillDto1.setCost(employeeBillDto1.getNoOfHours() * employeeBillDto1.getUnitPrice());
                             //signal employee2 for deletion in next filter pass
-                            //TODO filter out those signalled for deletion
                             employeeBillDto2.setId(Integer.MIN_VALUE);
                             return employeeBillDto1;
                         }));
