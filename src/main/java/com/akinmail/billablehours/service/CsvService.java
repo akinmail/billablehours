@@ -52,6 +52,14 @@ public class CsvService {
 
                     })
                     .map(l->{
+                        //filter out those signalled for deletion
+                        List<EmployeeBillDto> filteredList =  l.getValue().stream()
+                                .filter(employeeBillDto -> employeeBillDto.getId()!=Integer.MIN_VALUE)
+                                .collect(Collectors.toList());
+                        l.setValue(filteredList);
+                        return l;
+                    })
+                    .map(l->{
                         InvoiceDto invoiceDto = new InvoiceDto();
                         invoiceDto.setCompanyName(l.getKey());
                         invoiceDto.setEmployeeBills(l.getValue());
