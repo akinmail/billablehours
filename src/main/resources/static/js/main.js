@@ -167,7 +167,7 @@ jQuery(document).ready(function( $ ) {
       },
       success: function (data) {
         // your callback here
-        console.log(data)
+
 
         var number_of_rows = data.length;
         var table_body = "Result<br>";
@@ -199,7 +199,6 @@ jQuery(document).ready(function( $ ) {
           table_body+='</tbody></table>';
           $('#mainContent').hide();
           $('#tableDiv').html(table_body);
-          alert(table_body);
 
         }
 
