@@ -110,7 +110,7 @@ public class CsvService {
      * Helper method to convert a line into the Java object representation
      * @param      line   Each non empty line of the input file.
      */
-    private Function<String, EmployeeBillDto> mapToEmployeeDto = (line) -> {
+    public Function<String, EmployeeBillDto> mapToEmployeeDto = (line) -> {
         String[] p = line.split(COMMA);
 
         EmployeeBillDto employeeBillDto = new EmployeeBillDto();
@@ -131,7 +131,7 @@ public class CsvService {
      * Custom date time regularizer based on the expected format
      * @param   dateString   The datestring to regularize.
      */
-    private String regularizeTimeString(String dateString){
+    public String regularizeTimeString(String dateString){
         StringBuilder stringBuilder = new StringBuilder();
         String[] sections = dateString.split(":");
         //pad left conditionally

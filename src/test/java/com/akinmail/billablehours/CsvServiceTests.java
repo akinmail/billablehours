@@ -41,6 +41,17 @@ public class CsvServiceTests {
         List<InvoiceDto> invoiceDtoList = csvService.processInputFile(fileInputStream);
     }
 
+    @Test
+    public void shouldRegularizeDateTime(){
+        String date1 = csvService.regularizeTimeString("17:00");
+        assert date1.equalsIgnoreCase("17:00:00");
+        String date2 = csvService.regularizeTimeString("9:00");
+        assert date2.equalsIgnoreCase("09:00:00");
+        String date3 = csvService.regularizeTimeString("15:05");
+        assert date3.equalsIgnoreCase("15:05:00");
+
+    }
+
     // get file from classpath, resources folder
     private File getFileFromResources(String fileName) {
 
