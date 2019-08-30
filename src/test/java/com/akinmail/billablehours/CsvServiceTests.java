@@ -1,6 +1,7 @@
 package com.akinmail.billablehours;
 
 import com.akinmail.billablehours.service.CsvService;
+import dto.EmployeeBillDto;
 import dto.InvoiceDto;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +50,14 @@ public class CsvServiceTests {
         assert date2.equalsIgnoreCase("09:00:00");
         String date3 = csvService.regularizeTimeString("15:05");
         assert date3.equalsIgnoreCase("15:05:00");
+
+    }
+
+    @Test
+    public void shouldMapLineToEmployeeDto() {
+        String line = "1,300,Google,2019-07-01,9:00,17:00";
+        EmployeeBillDto employeeBillDto = csvService.mapToEmployeeDto.apply(line);
+        assert employeeBillDto.getId() == 1;
 
     }
 
