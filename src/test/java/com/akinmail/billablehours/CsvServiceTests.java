@@ -2,7 +2,6 @@ package com.akinmail.billablehours;
 
 import com.akinmail.billablehours.service.CsvService;
 import dto.InvoiceDto;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -23,10 +22,23 @@ public class CsvServiceTests {
     CsvService csvService;
 
     @Test
-    public void shouldGenerateInvoice() throws FileNotFoundException {
-        FileInputStream fileInputStream = new FileInputStream(getFileFromResources("testfile.csv"));
+    public void shouldGenerateInvoice() throws Exception {
+        FileInputStream fileInputStream = new FileInputStream(getFileFromResources("TestFile.csv"));
         List<InvoiceDto> invoiceDtoList = csvService.processInputFile(fileInputStream);
         assert invoiceDtoList.size()==3;
+    }
+
+    @Test
+    public void shouldSkipMissingRowsInCsvFile() throws Exception{
+        FileInputStream fileInputStream = new FileInputStream(getFileFromResources("MissingRowTestFile.csv"));
+        List<InvoiceDto> invoiceDtoList = csvService.processInputFile(fileInputStream);
+        assert invoiceDtoList.size()==3;
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void shouldThrowExceptionOnWrongDataTypeInFields() throws Exception{
+        FileInputStream fileInputStream = new FileInputStream(getFileFromResources("WrongDataTypeTestFile.csv"));
+        List<InvoiceDto> invoiceDtoList = csvService.processInputFile(fileInputStream);
     }
 
     // get file from classpath, resources folder
