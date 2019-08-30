@@ -19,27 +19,54 @@ import static java.util.stream.Collectors.groupingBy;
 
 @Service
 public class CsvService {
+    //The delimeter in a csv file is a comma
     private static final String COMMA = ",";
+    //Create an instance of the Logger
     Logger logger = LoggerFactory.getLogger(CsvService.class);
+    //The data includes a time field in this format
     DateTimeFormatter employeeTimeformatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    public List<InvoiceDto> processInputFile(FileInputStream inputFileStream) {
-        Map<String, List<EmployeeBillDto>> groupedBillsByCompany = null;
+    /**
+     * Accepts a FileInputStream object which represents an existing connection to an
+     * actual file in the file system.
+     * <p>
+     * Using functional programming methods like map(), collect(), groupingBy(), it performs stream operations on the data
+     * without having to load all the data in memory at the same time. This gives a significant memory usage improvement.
+     *
+     * <p>
+     * If <code>inputFileStream</code> is null then a <code>NullPointerException</code>
+     * is thrown.
+     * <p>
+     *
+     *
+     * @param      inputFileStream   the file to be opened for reading.
+     * @throws     Exception      throws some of the Subclasses of Exception such as NumberFormatException and IoException.
+     */
+    public List<InvoiceDto> processInputFile(FileInputStream inputFileStream) throws Exception {
+        //assert inputFileStream not null
+        if (inputFileStream == null) {
+            throw new NullPointerException("Input file stream cannot be null");
+        }
+        //The list to contain our final invoices per company
         List<InvoiceDto> invoiceDtoList = new ArrayList<>();
-        try{
+        //A map of groupings of the bills by company
+        Map<String, List<EmployeeBillDto>> groupedBillsByCompany = null;
+        try {
+            //Buffer the inputstream for faster reading
             BufferedReader br = new BufferedReader(new InputStreamReader(inputFileStream));
             groupedBillsByCompany = br.lines()
                     // skip the header of the csv
                     .skip(1)
+                    .filter(m->!m.isEmpty())
                     // convert to pojo
                     .map(mapToEmployeeDto)
                     // group rows by project name into a map using the project name as keys of the map
                     .collect(groupingBy(EmployeeBillDto::getProject));
 
-            AtomicInteger index = new AtomicInteger();
-
             invoiceDtoList = groupedBillsByCompany.entrySet().stream()
-                    .map(l->{
+                    //for each of the companies
+                    .map(l -> {
+                        //combine/reduce every pair that has the same id i.e its the same employee working on different days
                         l.getValue().stream().collect(Collectors.toMap(EmployeeBillDto::getId, Function.identity(), (EmployeeBillDto employeeBillDto1, EmployeeBillDto employeeBillDto2) -> {
                             employeeBillDto1.setNoOfHours(employeeBillDto1.getNoOfHours() + employeeBillDto2.getNoOfHours());
                             employeeBillDto1.setCost(employeeBillDto1.getNoOfHours() * employeeBillDto1.getUnitPrice());
@@ -50,47 +77,60 @@ public class CsvService {
                         return l;
 
                     })
-                    .map(l->{
-                        //filter out those signalled for deletion
-                        List<EmployeeBillDto> filteredList =  l.getValue().stream()
-                                .filter(employeeBillDto -> employeeBillDto.getId()!=Integer.MIN_VALUE)
+                    .map(l -> {
+                        //filter out those signalled for deletion i.e the duplicates
+                        List<EmployeeBillDto> filteredList = l.getValue().stream()
+                                .filter(employeeBillDto -> employeeBillDto.getId() != Integer.MIN_VALUE)
                                 .collect(Collectors.toList());
                         l.setValue(filteredList);
                         return l;
                     })
-                    .map(l->{
+                    //Map to the response data type
+                    .map(l -> {
                         InvoiceDto invoiceDto = new InvoiceDto();
                         invoiceDto.setCompanyName(l.getKey());
                         invoiceDto.setEmployeeBills(l.getValue());
-                        index.getAndIncrement();
                         return invoiceDto;
-                    }).collect(Collectors.toList());
+                    }).collect(Collectors.toList()); //convert to a list
 
 
             br.close();
-        } catch (Exception e) {
+        }catch (NumberFormatException e){
+            logger.error("The input file has mismatched data types, Please update it " + e);
+            throw (e);
+        }
+         catch (Exception e) {
             logger.error("An error occurred while reading the file " + e);
+             throw (e);
         }
         return invoiceDtoList ;
     }
 
+    /**
+     * Helper method to convert a line into the Java object representation
+     * @param      line   Each non empty line of the input file.
+     */
     private Function<String, EmployeeBillDto> mapToEmployeeDto = (line) -> {
         String[] p = line.split(COMMA);
 
         EmployeeBillDto employeeBillDto = new EmployeeBillDto();
-        employeeBillDto.setId(Integer.parseInt(p[0]));
-        LocalTime startTime = LocalTime.parse(regularizeTimeString(p[4]), employeeTimeformatter);
-        LocalTime endTime = LocalTime.parse(regularizeTimeString(p[5]), employeeTimeformatter);
+        employeeBillDto.setId(Integer.parseInt(p[0])); //read id field
+        LocalTime startTime = LocalTime.parse(regularizeTimeString(p[4]), employeeTimeformatter); //read start time field
+        LocalTime endTime = LocalTime.parse(regularizeTimeString(p[5]), employeeTimeformatter); // read end time field
         //get difference in time
         long hoursDifference = Duration.between(startTime, endTime).toHours();
         employeeBillDto.setNoOfHours(hoursDifference);
-        employeeBillDto.setUnitPrice(Long.parseLong(p[1]));
-        employeeBillDto.setCost(Long.parseLong(p[1]) * hoursDifference);
-        employeeBillDto.setProject(p[2]);
+        employeeBillDto.setUnitPrice(Long.parseLong(p[1])); //read unit price field
+        employeeBillDto.setCost(Long.parseLong(p[1]) * hoursDifference); // read cost field
+        employeeBillDto.setProject(p[2]); // read company name field
 
         return employeeBillDto;
     };
 
+    /**
+     * Custom date time regularizer based on the expected format
+     * @param   dateString   The datestring to regularize.
+     */
     private String regularizeTimeString(String dateString){
         StringBuilder stringBuilder = new StringBuilder();
         String[] sections = dateString.split(":");

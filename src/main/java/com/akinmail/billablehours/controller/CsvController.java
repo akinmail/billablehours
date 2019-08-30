@@ -26,7 +26,7 @@ public class CsvController {
     }
 
     @PostMapping(value = "/upload", produces = { MediaType.APPLICATION_JSON_VALUE })
-    public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file) throws IOException {
+    public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file) throws Exception {
         return new ResponseEntity<>(csvService.processInputFile((FileInputStream) file.getInputStream()), HttpStatus.OK);
     }
 }
